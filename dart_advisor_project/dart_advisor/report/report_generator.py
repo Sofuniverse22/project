@@ -4,6 +4,7 @@ from pathlib import Path
 from datetime import datetime
 from typing import Dict, Optional
 import logging
+from reportlab.lib.units import cm
 
 from dart_advisor.report.pdf_builder import PDFBuilder
 from dart_advisor.report.chart_generator import ChartGenerator
@@ -167,7 +168,7 @@ class ReportGenerator:
                     years=years,
                     revenues=revenues
                 )
-                pdf.add_chart(chart_path, caption="Revenue Trend")
+                pdf.add_chart(chart_path, width=10*cm, caption="Revenue Trend")
             except Exception as e:
                 logger.error(f"Error generating revenue chart: {e}")
 
@@ -183,7 +184,7 @@ class ReportGenerator:
                             operating_margins=operating_margins,
                             net_margins=net_margins
                         )
-                        pdf.add_chart(chart_path, caption="Profitability Trends")
+                        pdf.add_chart(chart_path, width=10*cm, caption="Profitability Trends")
                 except Exception as e:
                     logger.error(f"Error generating profitability chart: {e}")
 
@@ -202,7 +203,7 @@ class ReportGenerator:
                         years=years[:len(ratios)],
                         ratios_data=ratios_data
                     )
-                    pdf.add_chart(chart_path, caption="Financial Ratios Dashboard")
+                    pdf.add_chart(chart_path, width=10*cm, caption="Financial Ratios Dashboard")
                 except Exception as e:
                     logger.error(f"Error generating ratios dashboard: {e}")
 

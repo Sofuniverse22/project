@@ -12,6 +12,7 @@ from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_JUSTIFY
 from pathlib import Path
 from datetime import datetime
 import logging
+from PIL import Image as PILImage
 
 logger = logging.getLogger(__name__)
 
@@ -46,58 +47,58 @@ class PDFBuilder:
         """Setup paragraph styles"""
         styles = getSampleStyleSheet()
 
+        # Helper to safely add style
+        def safe_add_style(styles, name, **kwargs):
+            if name not in styles.byName:
+                styles.add(ParagraphStyle(name=name, **kwargs))
+
         # Title style
-        styles.add(ParagraphStyle(
-            name='CustomTitle',
+        safe_add_style(styles, 'CustomTitle',
             parent=styles['Heading1'],
             fontSize=28,
             textColor=colors.HexColor('#1f77b4'),
             spaceAfter=30,
             alignment=TA_CENTER,
             fontName='Helvetica-Bold'
-        ))
+        )
 
         # Subtitle style
-        styles.add(ParagraphStyle(
-            name='CustomSubtitle',
+        safe_add_style(styles, 'CustomSubtitle',
             parent=styles['Heading2'],
             fontSize=16,
             textColor=colors.HexColor('#555555'),
             spaceAfter=20,
             alignment=TA_CENTER
-        ))
+        )
 
         # Section header
-        styles.add(ParagraphStyle(
-            name='SectionHeader',
+        safe_add_style(styles, 'SectionHeader',
             parent=styles['Heading2'],
             fontSize=16,
             textColor=colors.HexColor('#1f77b4'),
             spaceAfter=12,
             spaceBefore=20,
             fontName='Helvetica-Bold'
-        ))
+        )
 
         # Subsection header
-        styles.add(ParagraphStyle(
-            name='SubsectionHeader',
+        safe_add_style(styles, 'SubsectionHeader',
             parent=styles['Heading3'],
             fontSize=14,
             textColor=colors.HexColor('#333333'),
             spaceAfter=10,
             spaceBefore=15,
             fontName='Helvetica-Bold'
-        ))
+        )
 
         # Body text
-        styles.add(ParagraphStyle(
-            name='BodyText',
+        safe_add_style(styles, 'BodyText',
             parent=styles['Normal'],
             fontSize=11,
             leading=16,
             alignment=TA_JUSTIFY,
             spaceAfter=10
-        ))
+        )
 
         return styles
 
@@ -166,8 +167,16 @@ class PDFBuilder:
             logger.warning(f"Chart image not found: {image_path}")
             return
 
+        # Get actual image dimensions
+        with PILImage.open(image_path) as pil_img:
+            img_width, img_height = pil_img.size
+
         # Calculate height maintaining aspect ratio
-        img = Image(str(image_path), width=width)
+        aspect_ratio = img_height / img_width
+        height = width * aspect_ratio
+
+        # Create image with explicit width and height
+        img = Image(str(image_path), width=width, height=height)
 
         # Add image
         self.story.append(img)

@@ -67,7 +67,7 @@ class ChartGenerator:
         Returns:
             Path to generated chart
         """
-        fig, ax = plt.subplots(figsize=(10, 6))
+        fig, ax = plt.subplots(figsize=(8, 4))
 
         # Plot line chart
         ax.plot(years, revenues, marker='o', linewidth=2, markersize=8, color='#1f77b4')
@@ -97,7 +97,7 @@ class ChartGenerator:
         plt.tight_layout()
 
         output_path = self.output_dir / filename
-        plt.savefig(output_path, dpi=300, bbox_inches='tight')
+        plt.savefig(output_path, dpi=150, bbox_inches='tight')
         plt.close()
 
         logger.info(f"Generated revenue trend chart: {output_path}")
@@ -122,7 +122,7 @@ class ChartGenerator:
         Returns:
             Path to generated chart
         """
-        fig, ax = plt.subplots(figsize=(10, 6))
+        fig, ax = plt.subplots(figsize=(8, 4))
 
         # Plot lines
         ax.plot(years, [m*100 for m in operating_margins], marker='o', label='Operating Margin', linewidth=2)
@@ -141,7 +141,7 @@ class ChartGenerator:
         plt.tight_layout()
 
         output_path = self.output_dir / filename
-        plt.savefig(output_path, dpi=300, bbox_inches='tight')
+        plt.savefig(output_path, dpi=150, bbox_inches='tight')
         plt.close()
 
         logger.info(f"Generated profitability chart: {output_path}")
@@ -164,7 +164,7 @@ class ChartGenerator:
         Returns:
             Path to generated chart
         """
-        fig, axes = plt.subplots(2, 2, figsize=(14, 10))
+        fig, axes = plt.subplots(2, 2, figsize=(10, 7))
         fig.suptitle('Financial Ratios Dashboard', fontsize=16, fontweight='bold')
 
         # ROE and ROA
@@ -217,7 +217,7 @@ class ChartGenerator:
         plt.tight_layout()
 
         output_path = self.output_dir / filename
-        plt.savefig(output_path, dpi=300, bbox_inches='tight')
+        plt.savefig(output_path, dpi=150, bbox_inches='tight')
         plt.close()
 
         logger.info(f"Generated ratios dashboard: {output_path}")
@@ -263,7 +263,7 @@ class ChartGenerator:
         plt.tight_layout()
 
         output_path = self.output_dir / filename
-        plt.savefig(output_path, dpi=300, bbox_inches='tight')
+        plt.savefig(output_path, dpi=150, bbox_inches='tight')
         plt.close()
 
         logger.info(f"Generated asset composition chart: {output_path}")
