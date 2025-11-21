@@ -1,6 +1,8 @@
 # Core Framework
 streamlit>=1.30.0
 python-dotenv>=1.0.0
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
 
 # AI & LLM
 anthropic>=0.18.0
@@ -74,7 +76,6 @@ pre-commit>=3.6.0
 
 # Async Support
 aiohttp>=3.9.0
-asyncio>=3.4.3
 
 # Date/Time
 python-dateutil>=2.8.2
