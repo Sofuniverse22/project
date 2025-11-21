@@ -5,7 +5,7 @@ from pydantic_settings import BaseSettings
 from pydantic import Field
 
 class Settings(BaseSettings):
-    anthropic_api_key: str = Field(..., env="ANTHROPIC_API_KEY")
+    anthropic_api_key: str = Field(default="", env="ANTHROPIC_API_KEY")  # Optional for lite mode
     log_level: str = Field("INFO", env="LOG_LEVEL")
     log_file: str = Field("logs/dart_advisor.log", env="LOG_FILE")
     output_dir: Path = Field(Path("output"), env="OUTPUT_DIR")
@@ -23,6 +23,10 @@ class Settings(BaseSettings):
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         Path(self.log_file).parent.mkdir(parents=True, exist_ok=True)
+
+    def has_api_key(self) -> bool:
+        """Check if API key is configured"""
+        return bool(self.anthropic_api_key and self.anthropic_api_key != "your_api_key_here")
 
 _settings = None
 

@@ -2,7 +2,7 @@
 
 import logging
 from typing import List, Optional
-from dart_advisor.llm.claude_client import ClaudeClient
+from dart_advisor.config.settings import get_settings
 from dart_advisor.utils.helpers import truncate_text
 
 logger = logging.getLogger(__name__)
@@ -11,9 +11,33 @@ logger = logging.getLogger(__name__)
 class BusinessAnalyzer:
     """Orchestrate business model analysis"""
 
-    def __init__(self):
-        """Initialize business analyzer"""
-        self.claude = ClaudeClient()
+    def __init__(self, use_ai: bool = None):
+        """
+        Initialize business analyzer
+
+        Args:
+            use_ai: Whether to use AI analysis (if None, auto-detect based on API key)
+        """
+        self.settings = get_settings()
+
+        # Auto-detect AI mode if not specified
+        if use_ai is None:
+            use_ai = self.settings.has_api_key()
+
+        self.use_ai = use_ai
+        self.claude = None
+
+        if self.use_ai:
+            try:
+                from dart_advisor.llm.claude_client import ClaudeClient
+                self.claude = ClaudeClient()
+                logger.info("AI business analysis mode enabled")
+            except Exception as e:
+                logger.warning(f"Failed to initialize Claude client: {e}")
+                self.use_ai = False
+
+        if not self.use_ai:
+            logger.info("Lite mode: Using basic text analysis only")
 
     def analyze(
         self,
@@ -32,21 +56,71 @@ class BusinessAnalyzer:
             max_context_length: Maximum length of context
 
         Returns:
-            Business model analysis from Claude
+            Business model analysis
         """
         logger.info(f"Analyzing business model for {company_name}")
 
         # Prepare context
         context = self._prepare_context(document_texts, max_context_length)
 
-        # Call Claude
-        analysis = self.claude.analyze_business_model(
-            company_name=company_name,
-            context=context,
-            financial_summary=financial_summary
-        )
+        # Get analysis (AI or basic)
+        if self.use_ai and self.claude:
+            try:
+                analysis = self.claude.analyze_business_model(
+                    company_name=company_name,
+                    context=context,
+                    financial_summary=financial_summary
+                )
+            except Exception as e:
+                logger.error(f"AI analysis failed, falling back to lite mode: {e}")
+                analysis = self._generate_lite_analysis(company_name, context, financial_summary)
+        else:
+            analysis = self._generate_lite_analysis(company_name, context, financial_summary)
 
         return analysis
+
+    def _generate_lite_analysis(
+        self,
+        company_name: str,
+        context: str,
+        financial_summary: str
+    ) -> str:
+        """Generate basic analysis without AI"""
+        lines = [f"# {company_name} 사업 분석 (라이트 버전)\n"]
+
+        lines.append("## 1. 문서 정보")
+        lines.append(f"- 분석 문서 길이: {len(context):,} 자")
+        lines.append(f"- 재무 정보: {financial_summary[:200]}...")
+        lines.append("")
+
+        lines.append("## 2. 키워드 기반 분석")
+
+        # Keyword analysis
+        keywords = {
+            '성장': ['성장', '확대', '증가', '개발'],
+            '혁신': ['혁신', '기술', '연구', 'R&D'],
+            '경쟁': ['경쟁', '시장', '점유율'],
+            '리스크': ['리스크', '위험', '불확실', '과제']
+        }
+
+        for category, words in keywords.items():
+            count = sum(context.lower().count(word) for word in words)
+            if count > 0:
+                lines.append(f"- {category} 관련 언급: {count}회")
+
+        lines.append("")
+
+        lines.append("## 3. 분석 제한사항")
+        lines.append("이 분석은 키워드 기반 라이트 버전입니다.")
+        lines.append("심층적인 사업모델 분석을 원하시면 Anthropic API 키를 설정해주세요.")
+        lines.append("")
+
+        lines.append("## 4. 추천사항")
+        lines.append("- 전문가 리뷰를 통한 상세 분석 권장")
+        lines.append("- 경쟁사 비교 분석 필요")
+        lines.append("- 시장 동향 추가 조사 필요")
+
+        return '\n'.join(lines)
 
     def _prepare_context(
         self,

@@ -3,7 +3,7 @@
 from typing import List, Dict, Optional
 import logging
 from dart_advisor.ingestion.financial_extractor import FinancialStatement, FinancialExtractor
-from dart_advisor.llm.claude_client import ClaudeClient
+from dart_advisor.config.settings import get_settings
 from dart_advisor.utils.helpers import format_currency, format_percentage, format_ratio
 
 logger = logging.getLogger(__name__)
@@ -12,10 +12,34 @@ logger = logging.getLogger(__name__)
 class FinancialAnalyzer:
     """Orchestrate financial analysis"""
 
-    def __init__(self):
-        """Initialize financial analyzer"""
+    def __init__(self, use_ai: bool = None):
+        """
+        Initialize financial analyzer
+
+        Args:
+            use_ai: Whether to use AI analysis (if None, auto-detect based on API key)
+        """
         self.extractor = FinancialExtractor()
-        self.claude = ClaudeClient()
+        self.settings = get_settings()
+
+        # Auto-detect AI mode if not specified
+        if use_ai is None:
+            use_ai = self.settings.has_api_key()
+
+        self.use_ai = use_ai
+        self.claude = None
+
+        if self.use_ai:
+            try:
+                from dart_advisor.llm.claude_client import ClaudeClient
+                self.claude = ClaudeClient()
+                logger.info("AI analysis mode enabled")
+            except Exception as e:
+                logger.warning(f"Failed to initialize Claude client: {e}")
+                self.use_ai = False
+
+        if not self.use_ai:
+            logger.info("Lite mode: Using statistical analysis only")
 
     def analyze(
         self,
@@ -43,19 +67,26 @@ class FinancialAnalyzer:
         # Calculate ratios
         ratios = self.extractor.calculate_ratios(statements)
 
-        # Format data for Claude
+        # Format data
         financial_data = self._format_statements(statements)
         financial_ratios_text = self._format_ratios(ratios)
 
-        # Get Claude's analysis
-        claude_analysis = self.claude.analyze_financials(
-            company_name=company_name,
-            financial_data=financial_data,
-            financial_ratios=financial_ratios_text
-        )
-
         # Create summary statistics
         summary = self._create_summary(statements, ratios)
+
+        # Get analysis (AI or statistical)
+        if self.use_ai and self.claude:
+            try:
+                claude_analysis = self.claude.analyze_financials(
+                    company_name=company_name,
+                    financial_data=financial_data,
+                    financial_ratios=financial_ratios_text
+                )
+            except Exception as e:
+                logger.error(f"AI analysis failed, falling back to lite mode: {e}")
+                claude_analysis = self._generate_lite_analysis(statements, ratios, summary)
+        else:
+            claude_analysis = self._generate_lite_analysis(statements, ratios, summary)
 
         return {
             'statements': statements,
@@ -63,6 +94,79 @@ class FinancialAnalyzer:
             'summary': summary,
             'claude_analysis': claude_analysis
         }
+
+    def _generate_lite_analysis(
+        self,
+        statements: List[FinancialStatement],
+        ratios: List,
+        summary: Dict
+    ) -> str:
+        """Generate basic statistical analysis without AI"""
+        lines = ["# 재무 분석 (통계 기반)\n"]
+
+        # 1. Revenue Analysis
+        lines.append("## 1. 매출 분석")
+        if summary.get('revenue_cagr'):
+            cagr = summary['revenue_cagr'] * 100
+            lines.append(f"- 연평균 성장률(CAGR): {cagr:.1f}%")
+            if cagr > 10:
+                lines.append("- 평가: 높은 성장세를 보이고 있습니다.")
+            elif cagr > 5:
+                lines.append("- 평가: 안정적인 성장세를 유지하고 있습니다.")
+            else:
+                lines.append("- 평가: 성장세가 다소 둔화되고 있습니다.")
+
+        latest = statements[-1]
+        lines.append(f"- 최근 매출: {format_currency(latest.revenue)}")
+        lines.append("")
+
+        # 2. Profitability Analysis
+        lines.append("## 2. 수익성 분석")
+        if summary.get('avg_operating_margin'):
+            om = summary['avg_operating_margin'] * 100
+            lines.append(f"- 평균 영업이익률: {om:.1f}%")
+            if om > 15:
+                lines.append("- 평가: 우수한 수익성을 보유하고 있습니다.")
+            elif om > 5:
+                lines.append("- 평가: 양호한 수익성 수준입니다.")
+            else:
+                lines.append("- 평가: 수익성 개선이 필요합니다.")
+
+        if summary.get('avg_net_margin'):
+            nm = summary['avg_net_margin'] * 100
+            lines.append(f"- 평균 순이익률: {nm:.1f}%")
+        lines.append("")
+
+        # 3. Financial Stability
+        lines.append("## 3. 재무 안정성")
+        if summary.get('latest_debt_to_equity'):
+            de = summary['latest_debt_to_equity']
+            lines.append(f"- 부채비율: {de:.1f}%")
+            if de < 100:
+                lines.append("- 평가: 재무 구조가 매우 안정적입니다.")
+            elif de < 200:
+                lines.append("- 평가: 재무 구조가 양호합니다.")
+            else:
+                lines.append("- 평가: 부채 수준이 다소 높습니다.")
+        lines.append("")
+
+        # 4. Key Metrics
+        lines.append("## 4. 주요 지표")
+        if ratios and len(ratios) > 0:
+            latest_ratio = ratios[-1]
+            if latest_ratio.roe:
+                lines.append(f"- ROE: {latest_ratio.roe*100:.1f}%")
+            if latest_ratio.roa:
+                lines.append(f"- ROA: {latest_ratio.roa*100:.1f}%")
+            if latest_ratio.current_ratio:
+                lines.append(f"- 유동비율: {latest_ratio.current_ratio:.2f}")
+        lines.append("")
+
+        lines.append("## 5. 종합 평가")
+        lines.append("이 분석은 통계 기반 라이트 버전입니다.")
+        lines.append("AI 기반 심층 분석을 원하시면 Anthropic API 키를 설정해주세요.")
+
+        return '\n'.join(lines)
 
     def _format_statements(self, statements: List[FinancialStatement]) -> str:
         """Format statements as text for Claude"""

@@ -36,6 +36,13 @@ class DARTAdvisor:
             log_file=self.settings.log_file
         )
 
+        # Check mode
+        self.lite_mode = not self.settings.has_api_key()
+        if self.lite_mode:
+            logger.info("Running in LITE MODE (no API key)")
+            console.print("\nℹ️  Running in Lite Mode (statistical analysis only)", style="yellow")
+            console.print("   For AI-powered analysis, add ANTHROPIC_API_KEY to .env\n", style="dim")
+
     def add_document(self, file_path: str | Path):
         """
         Add a document for analysis
@@ -156,9 +163,9 @@ class DARTAdvisor:
                     console.print(f"⚠️  Business analysis failed: {e}", style="yellow")
                 progress.remove_task(task)
 
-            # 6. Executive summary
+            # 6. Executive summary (only in AI mode)
             exec_summary = None
-            if fin_analysis and biz_analysis:
+            if not self.lite_mode and fin_analysis and biz_analysis:
                 task = progress.add_task("Generating executive summary...", total=None)
                 try:
                     claude = ClaudeClient()
@@ -174,6 +181,12 @@ class DARTAdvisor:
                     logger.error(f"Error generating executive summary: {e}")
                     console.print(f"⚠️  Executive summary failed: {e}", style="yellow")
                 progress.remove_task(task)
+            elif self.lite_mode and (fin_analysis or biz_analysis):
+                # Generate basic summary in lite mode
+                exec_summary = "# Executive Summary (Lite Mode)\n\n"
+                exec_summary += "이 보고서는 라이트 모드로 생성되었습니다.\n"
+                exec_summary += "통계 기반 재무 분석과 키워드 기반 텍스트 분석만 포함되어 있습니다.\n\n"
+                exec_summary += "AI 기반 심층 분석을 원하시면 Anthropic API 키를 설정해주세요."
 
         # Store results
         self.analysis_result = {
