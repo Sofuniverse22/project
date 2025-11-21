@@ -140,6 +140,10 @@ class PDFBuilder:
         self.story.append(Paragraph(title, self.styles[style_name]))
         self.story.append(Spacer(1, 0.3*cm))
 
+        # Skip if content is None or empty
+        if not content:
+            return
+
         # Add content (split into paragraphs)
         paragraphs = content.split('\n\n')
         for para in paragraphs:
