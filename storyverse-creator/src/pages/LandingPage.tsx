@@ -9,7 +9,8 @@ import {
   Sparkles,
   TrendingUp,
   Clock,
-  Zap
+  Zap,
+  Quote
 } from 'lucide-react';
 
 const fadeInUp = {
@@ -31,19 +32,25 @@ const features = [
     icon: Bot,
     title: '다중 AI 에이전트 협업',
     description: '스토리, 캐릭터, 검증 에이전트가 자율적으로 협업하여 최적의 결과물을 생성합니다.',
-    color: 'violet'
+    iconBg: 'bg-violet-500/20',
+    iconBorder: 'border-violet-500/30',
+    iconColor: 'text-violet-400'
   },
   {
     icon: CheckCircle,
     title: '세계관 일관성 보장',
     description: '원작과 95% 이상 일치하는 파생 콘텐츠를 자동으로 생성하고 검증합니다.',
-    color: 'emerald'
+    iconBg: 'bg-emerald-500/20',
+    iconBorder: 'border-emerald-500/30',
+    iconColor: 'text-emerald-400'
   },
   {
     icon: Shield,
     title: 'IP 권리 보호',
     description: 'IP 보유사 승인 시스템과 수익 자동 배분으로 안전한 창작 환경을 제공합니다.',
-    color: 'blue'
+    iconBg: 'bg-blue-500/20',
+    iconBorder: 'border-blue-500/30',
+    iconColor: 'text-blue-400'
   }
 ];
 
@@ -187,8 +194,8 @@ export function LandingPage() {
                 whileHover={{ y: -8 }}
                 className="card group cursor-pointer"
               >
-                <div className={`w-14 h-14 rounded-2xl bg-${feature.color}-500/10 border border-${feature.color}-500/20 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
-                  <feature.icon className={`w-7 h-7 text-${feature.color}-400`} />
+                <div className={`w-14 h-14 rounded-2xl ${feature.iconBg} border ${feature.iconBorder} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
+                  <feature.icon className={`w-7 h-7 ${feature.iconColor}`} />
                 </div>
                 <h3 className="text-xl font-semibold mb-3">{feature.title}</h3>
                 <p className="text-gray-400 leading-relaxed">{feature.description}</p>
@@ -208,7 +215,7 @@ export function LandingPage() {
             variants={staggerContainer}
           >
             <motion.div variants={fadeInUp} className="text-center mb-12">
-              <span className="inline-block px-4 py-1 rounded-full bg-taxi-driver/10 text-taxi-driver text-sm font-medium mb-4">
+              <span className="inline-block px-4 py-1 rounded-full bg-amber-500/10 text-amber-400 text-sm font-medium mb-4">
                 성공 사례
               </span>
               <h2 className="text-3xl md:text-4xl font-bold mb-4">
@@ -221,43 +228,52 @@ export function LandingPage() {
 
             <motion.div
               variants={fadeInUp}
-              className="grid md:grid-cols-3 gap-8 mb-12"
+              className="grid md:grid-cols-3 gap-6 mb-12"
             >
               {caseStudyStats.map((stat, index) => (
                 <motion.div
                   key={index}
-                  whileHover={{ scale: 1.05 }}
-                  className="text-center p-8 rounded-2xl bg-bg-tertiary/50 border border-gray-800"
+                  whileHover={{ scale: 1.02 }}
+                  className="relative text-center p-8 rounded-2xl bg-bg-secondary border border-gray-800 overflow-hidden"
                 >
-                  <stat.icon className="w-8 h-8 text-taxi-driver mx-auto mb-4" />
-                  <div className="text-4xl font-bold text-taxi-driver mb-2">{stat.value}</div>
-                  <div className="text-gray-400">{stat.label}</div>
+                  {/* Background glow */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent" />
+
+                  <div className="relative z-10">
+                    <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mx-auto mb-4">
+                      <stat.icon className="w-6 h-6 text-amber-400" />
+                    </div>
+                    <div className="text-4xl font-bold text-white mb-2">{stat.value}</div>
+                    <div className="text-gray-400">{stat.label}</div>
+                  </div>
                 </motion.div>
               ))}
             </motion.div>
 
             <motion.div
               variants={fadeInUp}
-              className="relative rounded-2xl overflow-hidden bg-gradient-to-r from-taxi-driver/20 to-amber-600/20 p-8 md:p-12"
+              className="relative rounded-2xl overflow-hidden bg-bg-secondary border border-gray-800 p-8 md:p-12"
             >
-              <div className="relative z-10 max-w-2xl">
-                <blockquote className="text-xl md:text-2xl font-medium mb-6 leading-relaxed">
-                  "AI가 세계관 일관성을 자동으로 검증해주니, 창작에만 집중할 수 있었습니다.
-                  특히 캐릭터의 성격이 원작과 자연스럽게 연결되어 팬들의 반응이 매우 좋았습니다."
-                </blockquote>
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-taxi-driver/20 flex items-center justify-center">
-                    <span className="text-xl">👤</span>
-                  </div>
-                  <div>
-                    <div className="font-semibold">김OO 작가</div>
-                    <div className="text-sm text-gray-400">갤럭시코퍼레이션 파트너 크리에이터</div>
-                  </div>
+              {/* Quote icon */}
+              <Quote className="w-12 h-12 text-violet-500/30 mb-6" />
+
+              <blockquote className="text-xl md:text-2xl font-medium mb-8 leading-relaxed text-gray-200">
+                "AI가 세계관 일관성을 자동으로 검증해주니, 창작에만 집중할 수 있었습니다.
+                특히 캐릭터의 성격이 원작과 자연스럽게 연결되어 팬들의 반응이 매우 좋았습니다."
+              </blockquote>
+
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-xl font-bold">
+                  김
+                </div>
+                <div>
+                  <div className="font-semibold text-lg">김OO 작가</div>
+                  <div className="text-gray-400">갤럭시코퍼레이션 파트너 크리에이터</div>
                 </div>
               </div>
-              <div className="absolute right-0 top-0 w-1/2 h-full opacity-20">
-                <div className="absolute inset-0 bg-gradient-to-l from-transparent to-bg-primary" />
-              </div>
+
+              {/* Decorative gradient */}
+              <div className="absolute -right-20 -bottom-20 w-64 h-64 bg-violet-500/10 rounded-full blur-3xl" />
             </motion.div>
           </motion.div>
         </div>
@@ -290,13 +306,15 @@ export function LandingPage() {
                   <ArrowRight className="w-5 h-5" />
                 </motion.button>
               </Link>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="btn-secondary flex items-center gap-2 text-lg px-8 py-4"
-              >
-                튜토리얼 보기
-              </motion.button>
+              <Link to="/tutorial">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="btn-secondary flex items-center gap-2 text-lg px-8 py-4"
+                >
+                  튜토리얼 보기
+                </motion.button>
+              </Link>
             </motion.div>
           </motion.div>
         </div>
